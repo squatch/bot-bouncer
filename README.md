@@ -46,6 +46,10 @@ Users who have been unfairly banned by Bot Bouncer should be encouraged to modma
 
 If an account was banned by Bot Bouncer on a sub but successfully appeals via r/BotBouncer, they will be unbanned from that sub automatically.
 
+## Development and testing
+
+See [TESTING.md](TESTING.md) for automated checks and how to safely playtest on a dedicated Devvit test subreddit.
+
 # Latest Changes
 
 ## v1.35.0
