@@ -20,14 +20,6 @@ If you want to preemptively allowlist a user, add the account as an Approved Sub
 
 You can also set a user flair with a CSS class that ends with `proof`. This is so that legacy flairs such as `botbustproof` will prevent a user from being banned.
 
-## How Bot Bouncer identifies bots
-
-Bot Bouncer combines automated evaluations with community reports and human review. Its goal is to identify accounts that automatically post or comment without being explicitly summoned, along with certain kinds of inauthentic promotion. It is not intended to classify every automated account or to act as a general-purpose spam detector.
-
-When an account posts or comments in a subreddit using the app, quick checks look for content that may match an enabled bot detector. A possible match triggers a fuller evaluation in `/r/BotBouncer`. The evaluation checks the account and its recent public post/comment history against the enabled detectors; some detectors may also use profile information or social links. Detector rules and their configuration can change over time.
-
-An automated match is not always enough to classify an account as a bot. Detectors can require a minimum amount of history, and some matches are marked for human review rather than automatic classification. Submitted accounts that are not automatically classified are sent for review by the team on `/r/BotBouncer`. Community reports, including any context supplied by the reporter, can help with that review. Reviewers can also mark useful, explicitly invoked accounts as service bots, or classify an account as human.
-
 ## Submitting users for review
 
 Subreddit moderators can report the bot from a post or comment's context menu. Choose "Report to /r/BotBouncer".
