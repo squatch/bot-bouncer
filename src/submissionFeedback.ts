@@ -4,8 +4,49 @@ import json2md from "json2md";
 import { CONTROL_SUBREDDIT } from "./constants.js";
 import { addMinutes } from "date-fns";
 import { UserStatus } from "./types.js";
+import { EvaluationResult, getAccountInitialEvaluationResults } from "./handleControlSubAccountEvaluation.js";
+import { normaliseHitReason } from "./utility.js";
+import markdownEscape from "markdown-escape";
 
 const FEEDBACK_QUEUE = "FeedbackQueue";
+const MAX_EVALUATION_RESULTS_IN_FEEDBACK = 8;
+
+function truncateFeedbackText (text: string, maxLength: number): string {
+    return text.length > maxLength ? `${text.substring(0, maxLength - 3)}...` : text;
+}
+
+function escapeFeedbackText (text: string, maxLength: number): string {
+    return truncateFeedbackText(markdownEscape(text.replace(/\s+/gu, " ").trim()), maxLength);
+}
+
+export function getBotClassificationExplanation (results: EvaluationResult[]): string {
+    if (results.length === 0) {
+        return "No automated evaluator match details were recorded for this classification. Please refer to the submission discussion for reviewer-provided context.";
+    }
+
+    const lines = [
+        "Why Bot Bouncer classified this account as a bot:",
+        "Automated evaluation matched:",
+    ];
+
+    for (const result of results.slice(0, MAX_EVALUATION_RESULTS_IN_FEEDBACK)) {
+        const hitReason = result.hitReason ? normaliseHitReason(result.hitReason) : undefined;
+        const reasonText = hitReason
+            ? escapeFeedbackText(hitReason.reason, 300)
+            : "no specific reason was recorded";
+        lines.push(`- **${escapeFeedbackText(result.botName, 100)}**: ${reasonText}`);
+
+        for (const detail of hitReason?.details.slice(0, 2) ?? []) {
+            lines.push(`  - ${escapeFeedbackText(detail.key, 100)}: ${escapeFeedbackText(detail.value, 200)}`);
+        }
+    }
+
+    if (results.length > MAX_EVALUATION_RESULTS_IN_FEEDBACK) {
+        lines.push(`- ${results.length - MAX_EVALUATION_RESULTS_IN_FEEDBACK} additional evaluator match(es) omitted.`);
+    }
+
+    return lines.join("\n");
+}
 
 const statusToExplanation: Record<UserStatus, string> = {
     [UserStatus.Organic]: "seems likely to be a human run account rather than a bot.",
@@ -145,6 +186,10 @@ async function updateCommentWithFeedback (username: string, commentId: string, u
 
     let commentText = comment.body;
     commentText += `\n\nEdit: This account has now been classified as **${userStatus}**. This means that the account ${statusToExplanation[userStatus]}`;
+    if (userStatus === UserStatus.Banned) {
+        const evaluationResults = await getAccountInitialEvaluationResults(username, context);
+        commentText += `\n\n${getBotClassificationExplanation(evaluationResults)}`;
+    }
     if (userStatus === UserStatus.Organic || userStatus === UserStatus.Service) {
         commentText += `\n\nIf you have any more information to help us understand why this may be a harmful or disruptive bot, please [message /r/${CONTROL_SUBREDDIT}](https://www.reddit.com/message/compose?to=/r/${CONTROL_SUBREDDIT}&subject=More%20information%20about%20${username})`;
     }
